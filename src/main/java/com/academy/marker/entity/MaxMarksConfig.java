@@ -7,16 +7,16 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "report_card_config")
-public class ReportCardConfig {
+@Table(name = "max_marks_config")
+public class MaxMarksConfig {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Integer minPassMarksPerSubject;
+    @Column(nullable = false, unique = true)
+    private String subjectName;
 
     @Column(nullable = false)
-    private Integer minTotalPassMarks;
+    private Integer maxMarks;
 }

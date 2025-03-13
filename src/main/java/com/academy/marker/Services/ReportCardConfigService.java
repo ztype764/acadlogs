@@ -1,5 +1,7 @@
 package com.academy.marker.Services;
 
+import com.academy.marker.Repos.ReportCardConfigRepository;
+import com.academy.marker.entity.ReportCardConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

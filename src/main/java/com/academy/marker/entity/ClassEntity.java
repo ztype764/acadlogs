@@ -3,20 +3,24 @@ package com.academy.marker.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "report_card_config")
-public class ReportCardConfig {
+@Table(name = "classes")
+public class ClassEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private Integer minPassMarksPerSubject;
+    private String name;
 
     @Column(nullable = false)
-    private Integer minTotalPassMarks;
+    private String section;
+
+    @OneToMany(mappedBy = "studentClass", cascade = CascadeType.ALL)
+    private List<Student> students;
 }

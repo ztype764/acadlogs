@@ -1,26 +1,38 @@
 package com.academy.marker.Controllers;
 
+import com.academy.marker.DTO.JuniorReportCardDTO;
+import com.academy.marker.Services.JuniorReportCardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/junior-report")
+@RequestMapping("/api/junior-report-cards")
 public class JuniorReportCardController {
 
-    @Autowired
-    private JuniorReportCardService reportCardService;
+    private final JuniorReportCardService juniorReportCardService;
 
-    // Get report card by student ID
-    @GetMapping("/{studentId}")
-    public Object getReportCard(@PathVariable Long studentId) {
-        return reportCardService.getReportCardByStudentId(studentId)
-                .orElse("Report card not found");
+    @Autowired
+    public JuniorReportCardController(JuniorReportCardService juniorReportCardService) {
+        this.juniorReportCardService = juniorReportCardService;
     }
 
-    // Save or update report card using @ModelAttribute
-    @PostMapping
-    public String saveReportCard(@ModelAttribute JuniorReportCardRequestDTO requestDTO) {
-        reportCardService.saveReportCard(requestDTO);
-        return "Report card saved successfully!";
+    @PostMapping("/create")
+    public String createJuniorReportCard(@ModelAttribute JuniorReportCardDTO dto) {
+        return juniorReportCardService.createJuniorReportCard(dto);
+    }
+
+    @GetMapping("/{id}")
+    public JuniorReportCardDTO getJuniorReportCard(@PathVariable Long id) {
+        return juniorReportCardService.getJuniorReportCard(id);
+    }
+
+    @PutMapping("/{id}/update")
+    public String updateJuniorReportCard(@PathVariable Long id, @ModelAttribute JuniorReportCardDTO dto) {
+        return juniorReportCardService.updateJuniorReportCard(id, dto);
+    }
+
+    @DeleteMapping("/{id}/delete")
+    public String deleteJuniorReportCard(@PathVariable Long id) {
+        return juniorReportCardService.deleteJuniorReportCard(id);
     }
 }

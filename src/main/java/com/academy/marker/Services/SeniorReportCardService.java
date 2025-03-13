@@ -1,5 +1,10 @@
 package com.academy.marker.Services;
 
+import com.academy.marker.DTO.SeniorReportCardDTO;
+import com.academy.marker.Repos.SeniorReportCardRepository;
+import com.academy.marker.Repos.StudentRepository;
+import com.academy.marker.entity.SeniorReportCard;
+import com.academy.marker.entity.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,66 +17,77 @@ public class SeniorReportCardService {
     private SeniorReportCardRepository seniorReportCardRepository;
 
     @Autowired
-    private ReportCardConfigService configService;
+    private StudentRepository studentRepository;
 
-    public Optional<SeniorReportCard> getReportCardByStudentId(Long studentId) {
-        return seniorReportCardRepository.findByStudentId(studentId);
-    }
+    public String createSeniorReportCard(SeniorReportCardDTO dto) {
+        Optional<Student> studentOpt = studentRepository.findById(dto.getStudentId());
+        if (studentOpt.isEmpty()) {
+            return "Student not found";
+        }
 
-    public SeniorReportCard saveReportCard(SeniorReportCardRequestDTO requestDTO) {
         SeniorReportCard reportCard = new SeniorReportCard();
-        reportCard.setStudentId(requestDTO.getStudentId());
-        reportCard.setAttendance(requestDTO.getAttendance());
+        reportCard.setStudent(studentOpt.get());
+        reportCard.setExamType(dto.getExamType());
+        reportCard.setTotalObtainedMarks(dto.getTotalObtainedMarks());
+        reportCard.setTotalMaxMarks(dto.getTotalMaxMarks());
+        reportCard.setOverallGrade(dto.getOverallGrade());
+        reportCard.setClassPosition(dto.getClassPosition());
+        reportCard.setPercentage(dto.getPercentage());
+        reportCard.setAttendance(dto.getAttendance());
+        reportCard.setFinalVerdict(dto.getFinalVerdict());
+        reportCard.setIsPassed(dto.getIsPassed());
 
-        List<SeniorSubject> subjects = requestDTO.getSubjects().stream().map(dto -> {
-            SeniorSubject subject = new SeniorSubject();
-            subject.setName(dto.getName());
-            subject.setMarks(dto.getMarks());
-            subject.setMaxMarks(dto.getMaxMarks() != null ? dto.getMaxMarks() : configService.getDefaultMaxMarks());
-            return subject;
-        }).collect(Collectors.toList());
-
-        reportCard.setSubjects(subjects);
-        calculateReportCardDetails(reportCard);
-        return seniorReportCardRepository.save(reportCard);
+        seniorReportCardRepository.save(reportCard);
+        return "Senior report card created successfully";
     }
 
-    private void calculateReportCardDetails(SeniorReportCard reportCard) {
-        int totalMarks = 0;
-        int totalMaxMarks = 0;
+    public SeniorReportCardDTO getSeniorReportCard(Long id) {
+        return seniorReportCardRepository.findById(id)
+            .map(this::convertToDTO)
+            .orElse(null);
+    }
 
-        for (SeniorSubject subject : reportCard.getSubjects()) {
-            totalMarks += subject.getMarks();
-            totalMaxMarks += subject.getMaxMarks() != null ? subject.getMaxMarks() : configService.getDefaultMaxMarks();
+    public String updateSeniorReportCard(Long id, SeniorReportCardDTO dto) {
+        Optional<SeniorReportCard> reportCardOpt = seniorReportCardRepository.findById(id);
+        if (reportCardOpt.isEmpty()) {
+            return "Report card not found";
         }
 
-        double percentage = (totalMarks * 100.0) / totalMaxMarks;
-        String grade = calculateGrade(percentage);
-        boolean isPassing = isStudentPassing(reportCard);
+        SeniorReportCard reportCard = reportCardOpt.get();
+        reportCard.setExamType(dto.getExamType());
+        reportCard.setTotalObtainedMarks(dto.getTotalObtainedMarks());
+        reportCard.setTotalMaxMarks(dto.getTotalMaxMarks());
+        reportCard.setOverallGrade(dto.getOverallGrade());
+        reportCard.setClassPosition(dto.getClassPosition());
+        reportCard.setPercentage(dto.getPercentage());
+        reportCard.setAttendance(dto.getAttendance());
+        reportCard.setFinalVerdict(dto.getFinalVerdict());
+        reportCard.setIsPassed(dto.getIsPassed());
 
-        reportCard.setGrandTotal(totalMarks);
-        reportCard.setPercentage(percentage);
-        reportCard.setOverallGrade(grade);
-        reportCard.setFinalVerdict(isPassing ? "Pass" : "Fail");
+        seniorReportCardRepository.save(reportCard);
+        return "Senior report card updated successfully";
     }
 
-    public void updatePositionsInClass() {
-        List<SeniorReportCard> reportCards = seniorReportCardRepository.findAll();
-
-        // Sort by grand total (highest first)
-        reportCards.sort((a, b) -> Integer.compare(b.getGrandTotal(), a.getGrandTotal()));
-
-        int rank = 1;
-        for (SeniorReportCard reportCard : reportCards) {
-            reportCard.setPositionInClass(rank++);
-            seniorReportCardRepository.save(reportCard);
+    public String deleteSeniorReportCard(Long id) {
+        if (!seniorReportCardRepository.existsById(id)) {
+            return "Report card not found";
         }
+        seniorReportCardRepository.deleteById(id);
+        return "Senior report card deleted successfully";
     }
 
-
-    public boolean isStudentPassing(SeniorReportCard reportCard) {
-        return reportCard.getGrandTotal() >= configService.getMinTotalMarks()
-                && reportCard.getSubjects().stream()
-                .allMatch(subject -> subject.getMarks() >= configService.getMinPassMarks());
+    private SeniorReportCardDTO convertToDTO(SeniorReportCard reportCard) {
+        SeniorReportCardDTO dto = new SeniorReportCardDTO();
+        dto.setStudentId(reportCard.getStudent().getId());
+        dto.setExamType(reportCard.getExamType());
+        dto.setTotalObtainedMarks(reportCard.getTotalObtainedMarks());
+        dto.setTotalMaxMarks(reportCard.getTotalMaxMarks());
+        dto.setOverallGrade(reportCard.getOverallGrade());
+        dto.setClassPosition(reportCard.getClassPosition());
+        dto.setPercentage(reportCard.getPercentage());
+        dto.setAttendance(reportCard.getAttendance());
+        dto.setFinalVerdict(reportCard.getFinalVerdict());
+        dto.setIsPassed(reportCard.getIsPassed());
+        return dto;
     }
 }

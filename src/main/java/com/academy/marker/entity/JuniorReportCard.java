@@ -1,28 +1,53 @@
 package com.academy.marker.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.util.List;
 
-@Data
 @Entity
+@Getter
+@Setter
+@Table(name = "junior_report_cards")
 public class JuniorReportCard {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "student_id")
+    @ManyToOne
+    @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @OneToMany(mappedBy = "juniorReportCard", cascade = CascadeType.ALL)
-    private List<JuniorSubject> subjects;
+    @Column(nullable = false)
+    private String examType; // Half-Yearly Test, Half-Yearly Exam, Annual Test, Annual Exam
 
-    // Common report card details
-    private Integer grandTotal;
+    @OneToMany(mappedBy = "juniorReportCard", cascade = CascadeType.ALL)
+    private List<JuniorSubjectMarks> subjectMarks;
+
+    @Column(nullable = false)
+    private Integer totalObtainedMarks;
+
+    @Column(nullable = false)
+    private Integer totalMaxMarks;
+
+    @Column(nullable = false)
     private String overallGrade;
-    private Integer positionInClass;
+
+    @Column(nullable = false)
+    private Integer classPosition;
+
+    @Column(nullable = false)
     private Double percentage;
+
+    @Column(nullable = false)
     private Integer attendance;
+
+    @Column(nullable = false)
     private String finalVerdict;
+
+    @Column(nullable = false)
+    private Boolean isPassed;
+
+
 }

@@ -1,24 +1,28 @@
 package com.academy.marker.Controllers;
 
+import com.academy.marker.DTO.ReportCardConfigDTO;
+import com.academy.marker.Services.ReportCardConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/config")
+@RequestMapping("/api/report-card-config")
 public class ReportCardConfigController {
 
-    @Autowired
-    private ReportCardConfigService configService;
+    private final ReportCardConfigService reportCardConfigService;
 
-    // Fetch current config
-    @GetMapping
-    public ReportCardConfig getConfig() {
-        return configService.getConfig();
+    @Autowired
+    public ReportCardConfigController(ReportCardConfigService reportCardConfigService) {
+        this.reportCardConfigService = reportCardConfigService;
     }
 
-    // Update config
-    @PutMapping
-    public ReportCardConfig updateConfig(@RequestBody ReportCardConfig config) {
-        return configService.saveConfig(config);
+    @PostMapping("/update")
+    public String updateReportCardConfig(@ModelAttribute ReportCardConfigDTO dto) {
+        return reportCardConfigService.updateReportCardConfig(dto);
+    }
+
+    @GetMapping
+    public ReportCardConfigDTO getReportCardConfig() {
+        return reportCardConfigService.getReportCardConfig();
     }
 }

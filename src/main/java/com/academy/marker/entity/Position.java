@@ -7,16 +7,17 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "report_card_config")
-public class ReportCardConfig {
+@Table(name = "position")
+public class Position {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Integer minPassMarksPerSubject;
+    @ManyToOne
+    @JoinColumn(name = "student_id", nullable = false)
+    private Student student;
 
     @Column(nullable = false)
-    private Integer minTotalPassMarks;
+    private Integer classRank;
 }

@@ -1,13 +1,16 @@
 package com.academy.marker.DTO;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-public class JuniorSubjectDTO {
-    private String name;
+@Getter
+@Setter
+public class JuniorSubjectMarksDTO {
+    private String subjectName;
     private Integer readingMarks;
     private Integer dictationMarks;
     private Integer oralMarks;
     private Integer writingMarks;
     private Integer maxMarks;
+    private String grade; // For Theology
 }

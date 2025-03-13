@@ -1,5 +1,10 @@
 package com.academy.marker.Services;
 
+import com.academy.marker.DTO.JuniorReportCardDTO;
+import com.academy.marker.Repos.JuniorReportCardRepository;
+import com.academy.marker.Repos.StudentRepository;
+import com.academy.marker.entity.JuniorReportCard;
+import com.academy.marker.entity.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,100 +17,77 @@ public class JuniorReportCardService {
     private JuniorReportCardRepository juniorReportCardRepository;
 
     @Autowired
-    private ReportCardConfigService configService;
+    private StudentRepository studentRepository;
 
-    public Optional<JuniorReportCard> getReportCardByStudentId(Long studentId) {
-        return juniorReportCardRepository.findByStudentId(studentId);
-    }
+    public String createJuniorReportCard(JuniorReportCardDTO dto) {
+        Optional<Student> studentOpt = studentRepository.findById(dto.getStudentId());
+        if (studentOpt.isEmpty()) {
+            return "Student not found";
+        }
 
-    public JuniorReportCard saveReportCard(JuniorReportCardRequestDTO requestDTO) {
         JuniorReportCard reportCard = new JuniorReportCard();
-        reportCard.setStudentId(requestDTO.getStudentId());
-        reportCard.setAttendance(requestDTO.getAttendance());
+        reportCard.setStudent(studentOpt.get());
+        reportCard.setExamType(dto.getExamType());
+        reportCard.setTotalObtainedMarks(dto.getTotalObtainedMarks());
+        reportCard.setTotalMaxMarks(dto.getTotalMaxMarks());
+        reportCard.setOverallGrade(dto.getOverallGrade());
+        reportCard.setClassPosition(dto.getClassPosition());
+        reportCard.setPercentage(dto.getPercentage());
+        reportCard.setAttendance(dto.getAttendance());
+        reportCard.setFinalVerdict(dto.getFinalVerdict());
+        reportCard.setIsPassed(dto.getIsPassed());
 
-        List<JuniorSubject> subjects = requestDTO.getSubjects().stream().map(dto -> {
-            JuniorSubject subject = new JuniorSubject();
-            subject.setName(dto.getName());
-            subject.setReadingMarks(dto.getReadingMarks());
-            subject.setDictationMarks(dto.getDictationMarks());
-            subject.setOralMarks(dto.getOralMarks());
-            subject.setWritingMarks(dto.getWritingMarks());
-            subject.setMaxMarks(dto.getMaxMarks() != null ? dto.getMaxMarks() : configService.getDefaultMaxMarks());
-            return subject;
-        }).collect(Collectors.toList());
-
-        reportCard.setSubjects(subjects);
-        calculateReportCardDetails(reportCard);
-        return juniorReportCardRepository.save(reportCard);
+        juniorReportCardRepository.save(reportCard);
+        return "Junior report card created successfully";
     }
 
-    private void calculateReportCardDetails(JuniorReportCard reportCard) {
-        int totalMarks = 0;
-        int totalMaxMarks = 0;
+    public JuniorReportCardDTO getJuniorReportCard(Long id) {
+        return juniorReportCardRepository.findById(id)
+            .map(this::convertToDTO)
+            .orElse(null);
+    }
 
-        for (JuniorSubject subject : reportCard.getSubjects()) {
-            if ("Theology".equals(subject.getName())) {
-                continue; // Theology is graded, not marked
-            }
-
-            int subjectMarks = (subject.getReadingMarks() != null ? subject.getReadingMarks() : 0)
-                    + (subject.getDictationMarks() != null ? subject.getDictationMarks() : 0)
-                    + (subject.getOralMarks() != null ? subject.getOralMarks() : 0)
-                    + (subject.getWritingMarks() != null ? subject.getWritingMarks() : 0);
-
-            totalMarks += subjectMarks;
-            totalMaxMarks += subject.getMaxMarks() != null ? subject.getMaxMarks() : configService.getDefaultMaxMarks();
+    public String updateJuniorReportCard(Long id, JuniorReportCardDTO dto) {
+        Optional<JuniorReportCard> reportCardOpt = juniorReportCardRepository.findById(id);
+        if (reportCardOpt.isEmpty()) {
+            return "Report card not found";
         }
 
-        double percentage = (totalMarks * 100.0) / totalMaxMarks;
-        String grade = calculateGrade(percentage);
-        boolean isPassing = isStudentPassing(reportCard);
+        JuniorReportCard reportCard = reportCardOpt.get();
+        reportCard.setExamType(dto.getExamType());
+        reportCard.setTotalObtainedMarks(dto.getTotalObtainedMarks());
+        reportCard.setTotalMaxMarks(dto.getTotalMaxMarks());
+        reportCard.setOverallGrade(dto.getOverallGrade());
+        reportCard.setClassPosition(dto.getClassPosition());
+        reportCard.setPercentage(dto.getPercentage());
+        reportCard.setAttendance(dto.getAttendance());
+        reportCard.setFinalVerdict(dto.getFinalVerdict());
+        reportCard.setIsPassed(dto.getIsPassed());
 
-        reportCard.setGrandTotal(totalMarks);
-        reportCard.setPercentage(percentage);
-        reportCard.setOverallGrade(grade);
-        reportCard.setFinalVerdict(isPassing ? "Pass" : "Fail");
+        juniorReportCardRepository.save(reportCard);
+        return "Junior report card updated successfully";
     }
 
-    public void updatePositionsInClass() {
-        List<JuniorReportCard> reportCards = juniorReportCardRepository.findAll();
-
-        // Sort by grand total (highest first)
-        reportCards.sort((a, b) -> Integer.compare(b.getGrandTotal(), a.getGrandTotal()));
-
-        int rank = 1;
-        for (JuniorReportCard reportCard : reportCards) {
-            reportCard.setPositionInClass(rank++);
-            juniorReportCardRepository.save(reportCard);
+    public String deleteJuniorReportCard(Long id) {
+        if (!juniorReportCardRepository.existsById(id)) {
+            return "Report card not found";
         }
+        juniorReportCardRepository.deleteById(id);
+        return "Junior report card deleted successfully";
     }
 
-
-    private String calculateGrade(double percentage) {
-        if (percentage >= 90) return "A+";
-        if (percentage >= 80) return "A";
-        if (percentage >= 70) return "B";
-        if (percentage >= 60) return "C";
-        if (percentage >= 50) return "D";
-        return "F";
-    }
-
-    public boolean isStudentPassing(JuniorReportCard reportCard) {
-        int minTotalMarks = configService.getMinTotalMarks();
-        int minPassMarks = configService.getMinPassMarks();
-
-        if (reportCard.getGrandTotal() < minTotalMarks) {
-            return false;
-        }
-
-        return reportCard.getSubjects().stream()
-                .filter(subject -> !"Theology".equals(subject.getName()))
-                .allMatch(subject -> {
-                    int subjectMarks = (subject.getReadingMarks() != null ? subject.getReadingMarks() : 0)
-                            + (subject.getDictationMarks() != null ? subject.getDictationMarks() : 0)
-                            + (subject.getOralMarks() != null ? subject.getOralMarks() : 0)
-                            + (subject.getWritingMarks() != null ? subject.getWritingMarks() : 0);
-                    return subjectMarks >= minPassMarks;
-                });
+    private JuniorReportCardDTO convertToDTO(JuniorReportCard reportCard) {
+        JuniorReportCardDTO dto = new JuniorReportCardDTO();
+        dto.setStudentId(reportCard.getStudent().getId());
+        dto.setExamType(reportCard.getExamType());
+        dto.setTotalObtainedMarks(reportCard.getTotalObtainedMarks());
+        dto.setTotalMaxMarks(reportCard.getTotalMaxMarks());
+        dto.setOverallGrade(reportCard.getOverallGrade());
+        dto.setClassPosition(reportCard.getClassPosition());
+        dto.setPercentage(reportCard.getPercentage());
+        dto.setAttendance(reportCard.getAttendance());
+        dto.setFinalVerdict(reportCard.getFinalVerdict());
+        dto.setIsPassed(reportCard.getIsPassed());
+        return dto;
     }
 }

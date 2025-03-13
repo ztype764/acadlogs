@@ -8,8 +8,8 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-@Table(name = "senior_report_cards")
-public class SeniorReportCard {
+@Table(name = "report_cards")
+public class ReportCard {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,8 +22,8 @@ public class SeniorReportCard {
     @Column(nullable = false)
     private String examType; // Half-Yearly Test, Half-Yearly Exam, Annual Test, Annual Exam
 
-    @OneToMany(mappedBy = "seniorReportCard", cascade = CascadeType.ALL)
-    private List<SeniorSubjectMarks> subjectMarks;
+    @OneToMany(mappedBy = "reportCard", cascade = CascadeType.ALL)
+    private List<SubjectMarks> subjectMarks;
 
     @Column(nullable = false)
     private Integer totalObtainedMarks;
